@@ -81,6 +81,7 @@ app.post("/signup", async (req, res) => {
     } else {
         const userdata = await collection.insertMany(data);
         console.log("User registered with ID:", userdata.insertedId);
+        res.redirect("/login");
     }
 });
 
