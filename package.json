@@ -9,9 +9,6 @@
   },
   "scripts": {
     "start": "node src/index.js",
-    "dev":"nodemon src/index.js",
-    "build": "npm run build",
-    "predeploy":"npm run build",
-    "deploy":"gh-pages -d build"
+    "dev":"nodemon src/index.js"
   }
 }
