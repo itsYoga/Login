@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+ 
+<html>
+<head>
+    <title>塗鴉區</title>
+    
+    <script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.6.4.js">
+    </script>
+    <style>
+        :root {
+            --grey-color: rgb(228, 228, 228);
+            --darker-grey-color: rgb(189, 189, 189);
+            --text-color: rgb(60, 60, 60);
+            --border-radius: 15px;
+        }
+        body{
+            background-image: url('https://c.wallhere.com/photos/e1/ab/Dragon_Ball_Son_Goku_Kid_Goku_manga_simple_background_white_background_minimalism_anime_boys-2257064.jpg!d');
+          background-size: 100%;
+        }
+        body,input { font-size: 9pt; }
+        .container{
+            margin-left: 10em;
+            display: flex;
+            flex-wrap: nowrap;
+        }
+        #dCanvas,#dLine { clear: both; }
+        .option
+        {
+            float: left; width: 20px; height: 20px; border: 2px solid #cccccc;
+            margin-right: 4px; margin-bottom: 4px;
+        }
+        .active { border: 2px solid black; }
+        .lw { text-align: center; vertical-align: middle; }
+        img.output { border: 1px solid green; }
+        #cSketchPad { cursor: arrow; }
+        .video{
+            position: absolute;
+            
+            top: 12em;
+            left: 50%;
+        } .dOutput{
+            position: absolute;
+            
+            top: 1em;
+            left: 50%;
+        }
+        #back{
+            position: absolute;
+            left: 0;
+            top:50%;
+            width: 80px;
+            height: 80px;
+            transform: scaleX(-1);
+        }
+        #next{
+            position: absolute;
+            right: 0;
+            top:50%;
+            width: 80px;
+            height: 80px;
+        }
+        #next:active{
+            transform: translateY(2px);
+        }
+        #back:active{
+            transform: translateY(2px) scaleX(-1);
+            
+        }
+        footer {
+            position: fixed;
+            bottom: 0;
+            
+            width: 100%;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 2em 5em;
+        }
+
+        .skip_button,
+        .check_button{
+            
+            font-size: 1em;
+            font-weight: 600;
+            padding: 0.8em 2.5em;
+            border-radius: var(--border-radius);
+            transition: 0s all ease-in-out;
+            cursor: pointer;
+        }
+        .clearbutton{
+            width: 50px;
+            font-size: 1.8em;
+            text-indent: -12px;
+            font-weight: 600;
+            padding: 0.8em 1.5em;
+            border-radius: var(--border-radius);
+            transition: 0s all ease-in-out;
+            cursor: pointer;
+            margin-bottom: 1em;
+        }
+        .button {
+            position: absolute;
+            left: 25em;
+            width: 50px;
+            text-indent: 3px;
+            font-size: 1.8em;
+            font-weight: 600;
+            padding: 0.6em 1.3em;
+            border-radius: var(--border-radius);
+            transition: 0s all ease-in-out;
+            cursor: pointer;
+            margin-bottom: 1em;
+        }
+        .dl_button{
+            position: absolute;
+            right: 0;
+            width: 90px;
+            font-size: 1.8em;
+            font-weight: 600;
+            padding: 0.6em 1em;
+            border-radius: var(--border-radius);
+            transition: 0s all ease-in-out;
+            cursor: pointer;
+            margin-left: -5em;
+            margin-bottom: 1em;
+        }
+
+        .skip_button ,.clearbutton{
+            color: white;
+            border: 1px solid var(--grey-color);
+            background-color: rgb(157, 156, 156);
+            box-shadow: 0px 3px 0px 0px var(--grey-color);
+        }
+
+        .skip_button:hover ,.clearbutton:hover{
+            background-color: rgba(143, 157, 173, 0.2);
+        }
+
+        .check_button,.button,.dl_button {
+            color: white;
+            border: 1px solid #2ec748;
+            background-color: #2ec748;
+            box-shadow: 0px 3px 0px 0px #27aa3d;
+        }
+
+        .check_button:hover,.button:hover,.dl_button:hover {
+            background-color: #33db4f;
+        }
+
+        .skip_button:active,
+        .check_button:active,
+        .button:active ,.clearbutton:active,.dl_button:active{
+            transform: translateY(2px);
+            box-shadow: none;
+        }
+    </style>
+    <script>
+        const gojuonHiragana = [
+        "あ", "い", "う", "え", "お",
+        "か", "き", "く", "け", "こ",
+        "さ", "し", "す", "せ", "そ",
+        "た", "ち", "つ", "て", "と",
+        "な", "に", "ぬ", "ね", "の",
+        "は", "ひ", "ふ", "へ", "ほ",
+        "ま", "み", "む", "め", "も",
+        "や", "ゆ", "よ", 
+        "ら", "り", "る", "れ", "ろ",
+        "わ", "を", "ん"
+        ];
+        const urlParams = new URLSearchParams(window.location.search);
+        const key = urlParams.get('key'); 
+        let originalVideoContent;
+        if (key) {
+    
+    // 获取JSON数据
+    fetch('vocabulary.json')
+        .then(response => response.json())
+        .then(data => {
+            // 获取键名对应的图像链接
+            const imageUrl = data[key] ? data[key].img : '';
+            const videoFrame = data[key] ? data[key].video : '';
+            // 将图像链接设置到图像元素的src属性上
+            document.getElementById('backImage').src = imageUrl;
+            if (videoFrame) {
+                //console.log(videoFrame);
+                const videoContainer = document.getElementById('video');
+                videoContainer.innerHTML = '<h1>筆畫影片</h1>';
+                videoContainer.innerHTML+=videoFrame;
+            }
+            originalVideoContent = $("#video").html();
+        })
+        .catch(error => console.error('Error fetching JSON:', error));
+    } else {
+    console.error('Key parameter is missing.');
+    }   
+    
+        $(function () {
+            //產生不同顏色的div方格當作調色盤選項
+            var colors =
+            "red;orange;yellow;green;blue;indigo;purple;black;white".split(';');
+            var sb = [];
+            $.each(colors, function (i, v) {
+                sb.push("<div class='option' style='background-color:" + v + "'></div>");
+            });
+            $("#dPallete").html(sb.join("\n"));
+            //產生不同尺寸的方格當作線條粗細選項
+            sb = [];
+            for (var i = 1; i <= 9; i++)
+                sb.push("<div class='option lw'>" +
+         "<div style='margin-top:#px;margin-left:#px;width:%px;height:%px'></div></div>"
+                .replace(/%/g, i).replace(/#/g, 10 - i / 2));
+            $("#dLine").html(sb.join('\n'));
+            var $clrs = $("#dPallete .option");
+            var $lws = $("#dLine .option");
+            //點選調色盤時切換焦點並取得顏色存入p_color，
+            //同時變更線條粗細選項的方格的顏色
+            $clrs.click(function () {
+                $clrs.removeClass("active");
+                $(this).addClass("active");
+                p_color = this.style.backgroundColor;
+                $lws.children("div").css("background-color", p_color);
+            }).eq(7).click();
+            //點選線條粗細選項時切換焦點並取得寬度存入p_width
+            $lws.click(function () {
+                $lws.removeClass("active");
+                $(this).addClass("active");
+                p_width =
+                    $(this).children("div").css("width").replace("px", "");
+ 
+            }).eq(6).click();
+            //取得canvas context
+            var $canvas = $("#cSketchPad");
+            var ctx = $canvas[0].getContext("2d");
+            ctx.lineCap = "round";
+            ctx.fillStyle = "rgba(255, 255, 255, 0.5)"; //整個canvas塗上白色背景避免PNG的透明底色效果
+            ctx.fillRect(0, 0, $canvas.width(), $canvas.height());
+            var drawMode = false;
+            //canvas點選、移動、放開按鍵事件時進行繪圖動作
+            $canvas.mousedown(function (e) {
+                ctx.beginPath();
+                ctx.strokeStyle = p_color;
+                ctx.lineWidth = p_width;
+                ctx.moveTo(e.pageX - $canvas.position().left, e.pageY - $canvas.position().top);
+                drawMode = true;
+            })
+            .mousemove(function (e) {
+                if (drawMode) {
+                    ctx.lineTo(e.pageX - $canvas.position().left, e.pageY - $canvas.position().top);
+                    ctx.stroke();
+                }
+            })
+            .mouseup(function (e) {
+                drawMode = false;
+            });
+            
+            //利用.toDataqURL()將繪圖結果轉成圖檔
+            $("#bGenImage").click(function () {
+                
+                $("#video").empty();
+                $("#dOutput").html("<h1>你寫的字</h1>").append(
+                $("<img />", { src: $canvas[0].toDataURL(),
+                    "class": "output"
+                }
+                ));
+                $("#dOutput").append(
+                $("<div />", {
+                    class: "dl_button",
+                    text: "Download",
+                    click: function () {
+                    const imageDataUrl = $(".output").attr("src");
+                    const downloadLink = document.createElement("a");
+                    downloadLink.href = imageDataUrl;
+                    downloadLink.download = "your_"+key+".png";
+                    document.body.appendChild(downloadLink);
+                    downloadLink.click();
+                    document.body.removeChild(downloadLink);
+                }
+                }));
+            });
+           
+
+    $("#clear").click(function () {
+        // 删除原有的canvas元素
+        $canvas.remove();
+        $("#dOutput").empty();
+        $("#video").html(originalVideoContent);
+        // 创建新的canvas元素并添加到DOM
+        var newCanvas = $('<canvas id="cSketchPad" width="500" height="500" style="border: 2px solid gray; " />');
+        $("#dCanvas").append(newCanvas);
+
+        // 获取新canvas的context
+        $canvas = $("#cSketchPad");
+        ctx = $canvas[0].getContext("2d");
+        ctx.lineCap = "round";
+        ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
+        ctx.fillRect(0, 0, $canvas.width(), $canvas.height());
+
+        // 重新绑定画图事件
+        $canvas.mousedown(function (e) {
+                ctx.beginPath();
+                ctx.strokeStyle = p_color;
+                ctx.lineWidth = p_width;
+                ctx.moveTo(e.pageX - $canvas.position().left, e.pageY - $canvas.position().top);
+                drawMode = true;
+            })
+            .mousemove(function (e) {
+                if (drawMode) {
+                    ctx.lineTo(e.pageX - $canvas.position().left, e.pageY - $canvas.position().top);
+                    ctx.stroke();
+                }
+            })
+            .mouseup(function (e) {
+                drawMode = false;
+            });
+    });
+    $(".skip_button").click(function () {
+    window.location.href = "writemenu"; 
+    });
+    $(".check_button").click(function () {
+    window.location.href = "voc.ejs?key="+key; 
+    });
+    $("#next").click(function () {
+    const keyIndex = gojuonHiragana.indexOf(key);
+    const nextIndex = (keyIndex + 1) % gojuonHiragana.length;
+    const nextKey = gojuonHiragana[nextIndex];
+    window.location.href = "paint.ejs?key=" + nextKey;
+    });
+    $("#back").click(function () {
+        const keyIndex = gojuonHiragana.indexOf(key);
+        const prevIndex = (keyIndex - 1 + gojuonHiragana.length) % gojuonHiragana.length;
+        const prevKey = gojuonHiragana[prevIndex];
+        window.location.href = "paint.ejs?key=" + prevKey;
+    });
+    
+});
+
+</script>
+</head>
+<body>
+<div class="container">
+<div>
+<div id="dPallete"></div>
+<div id="dLine"></div>
+<div id="dCanvas" >
+<img src="" id="backImage" width="500" height="500" style="position: absolute; z-index: -1;">
+<canvas id="cSketchPad" width="500" height="500" style="border: 2px solid gray; " />
+</div>
+<div id="bGenImage" class="button">生成</div>
+<div id="clear" class="clearbutton">CLEAR</div>
+</div>
+<div class="video" id="video">  
+<div><h1>筆畫影片</h1><iframe width="560" height="315" src="https://www.youtube.com/embed/wD3FJgij79c?start=0&amp;end=12" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>
+</div>
+<div class="dOutput" id="dOutput"></div>
+</div>
+<img id="next" src="https://cdn-icons-png.flaticon.com/512/189/189253.png">
+<img id="back" src="https://cdn-icons-png.flaticon.com/512/189/189253.png">
+<footer>
+    <div class="skip_button">MENU</div>
+    <div class="check_button">單字</div>
+</footer>
+</body>
+</html>
