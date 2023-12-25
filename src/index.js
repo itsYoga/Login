@@ -27,7 +27,7 @@ app.get('/sentence', function(req, res) {
 });
 app.get("/src/jquery3.6.1.js", (req, res) => {
     // Use path.join to construct the full path to the file
-    const filePath = path.join(__dirname, 'src', 'jquery3.6.1.js');
+    const filePath = path.join(__dirname, 'jquery3.6.1.js');
     
     // Use express's res.sendFile to send the file
     res.sendFile(filePath);
